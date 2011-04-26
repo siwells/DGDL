@@ -1,0 +1,9 @@
+Simple{
+{turns,magnitude:single,ordering:strict}
+{players,min:2,max:2}
+{player,id:Player1}
+{player,id:Player2}
+{store,id:CStore,owner:Player1}
+{store,id:CStore,owner:Player2}
+{Assert,{p},"I assert that",{store(add, {p}, CStore, Speaker),store(add, {p}, CStore, Listener)}}
+}
