@@ -1,0 +1,152 @@
+CTG
+{
+    {   turns, magnitude:single, ordering:liberal }; 
+    {   players, min:1, max:undefined };
+    {   player, id:$PlayerID$, role:speaker };
+
+    {   Initial, scope:initial, 
+        {
+            move(,next,Suggest1) || 
+            move(propose,next,Suggest3) || 
+            move(propose,next,Suggest6) 
+        } 
+    };
+
+    {   Suggest1, {p}, "My idea is", 
+        { 
+            move(propose,next,Suggest3) || 
+            move(propose,next,Check6) || 
+            move(propose,next,Agree2) || 
+            move(propose,next,Transform6) || 
+            move(propose,next,Agree4) 
+        }
+    };
+
+    {   Suggest2, {p}, "Just imagine", 
+        { 
+            move(propose,next,Suggest3) || 
+            move(propose,next,Check6) || 
+            move(propose,next,Agree2) || 
+            move(propose,next,Transform6) || 
+            move(propose,next,Agree4) 
+        } 
+    };
+
+    {   Suggest3, {p}, "What if", 
+        { 
+            move(propose,next,Agree3) || 
+            move(propose,next,Transform6) || 
+            move(propose,next,Agree2) || 
+            move(propose,next,Agree4) || 
+            move(propose,next,Check8) 
+        } 
+    };
+
+    {   Suggest4, {p}, "How about", 
+        { 
+            move(propose,next,Check6) || 
+            move(propose,next,Agree3) || 
+            move(propose,next,Transform6) || 
+            move(propose,next,Agree4) || 
+            move(propose,next,Suggest3) 
+        } 
+    };
+
+    {   Suggest5, {p}, "I feel", 
+        { 
+            move(propose,next,Suggest3) || 
+            move(propose,next,Check6) || 
+            move(propose,next,Agree2) || 
+            move(propose,next,Transform6) || 
+            move(propose,next,Suggest3) 
+        } 
+    };
+
+    {   Suggest6, {p}, "I think", 
+        { 
+            move(propose,next,Suggest3) || 
+            move(propose,next,Check6) || 
+            move(propose,next,Agree2) || 
+            move(propose,next,Transform6) 
+        } 
+    };
+
+    {   Suggest7, {p}, "Let me say more about that", 
+        { 
+            move(propose,next,Question6) || 
+            move(propose,next,Check6) || 
+            move(propose,next,Agree5) || 
+            move(propose,next,Agree1) 
+        } 
+    };
+
+    {   Suggest8, {p}, "An example", 
+        { 
+            move(propose,next,Check6) || 
+            move(propose,next,Check8) || 
+            move(propose,next,Transform7) || 
+            move(propose,next,Agree5) || 
+            move(propose,next,Agree1) 
+        } 
+    };
+
+    {   Question1, {p}, "Why?", 
+        { 
+            move(propose,next,Suggest7) || 
+            move(propose,next,Transform6) || 
+            move(propose,next,Suggest5) 
+        } 
+    }; 
+            
+    {   Question2, {p}, "Can you say more on that?", 
+        { 
+            move(propose,next,Suggest7) || 
+            move(propose,next,Suggest5) 
+        } 
+    }; 
+    
+    {   Question3, {p}, "Does this connect with anything for you?", 
+        { 
+            move(propose,next,Suggest5) || 
+            move(propose,next,Transform2) || 
+            move(propose,next,Maintain2) 
+        } 
+    };
+
+    {   Question4, {p}, "What do you mean when you say?", 
+        { 
+            move(propose,next,Suggest7) || 
+            move(propose,next,Transform6) 
+        } 
+    }; 
+    
+    {   Question5, {p}, "Why do you think that?", 
+        { 
+            move(propose,next,Suggest6) 
+        } 
+    };
+
+    {Question6, {p}, "Why do you feel that?", 
+        { 
+            move(propose,next,Suggest5) || 
+            move(propose,next,Suggest6) || 
+            move(propose,next,Suggest7) 
+        } 
+    };
+
+    {   Question7, {p}, "What are the possible alternatives?", 
+        { 
+            move(propose,next,Transform6) || 
+            move(propose,next,Check4) 
+        } 
+    }; 
+    
+    {   Question8, {p}, "Has anyone got another idea?", 
+        { 
+            move(propose,next,Suggest1) || 
+            move(propose,next,Suggest4) || 
+            move(propose,next,Suggest3) || 
+            move(propose,next,Suggest6) 
+        } 
+    }; 
+}
