@@ -1,0 +1,176 @@
+Lorenzen
+{
+    {   turns, magnitude:single, ordering:strict };
+    {   players, min:2, max:2 };
+    {   player, id:proponent };
+    {   player, id:respondent };
+    {   store, id:assertions, owner:proponent, structure:set, visibility:public }; 
+    {   store, id:assertions, owner:opponent, structure:set, visibility:public }; 
+    {   store, id:attacks, proponent:, structure:stack, visibility:public };
+    {   store, id:attacks, opponent:, structure:stack, visibility:public };
+
+    {   Initial, scope:initial,
+        { 
+            move(mandate, next, Thesis, proponent) 
+        } 
+    };
+    
+    {   WinLoss, scope:movewise,
+        { 
+            if 
+            { 
+                size(LegalMoves,speaker,empty) 
+            }
+            then 
+            { 
+                assign(listener,winner) & 
+                assign(speaker,loser) & 
+                status(complete, Lorenzen) 
+            } 
+        } 
+    };
+    
+    {   Thesis, {p},
+        { 
+            store(add, {p}, assertions, proponent) 
+        }    
+    };
+
+    {   Hypothesis, {P},
+        { 
+            if 
+            { 
+                event(last,Thesis) 
+            } 
+            then 
+            { 
+                store(add, {P}, assertions, opponent) 
+            } 
+        }   
+    };
+    
+    {   AttackLeftConjunct, {p},
+        { 
+            if 
+            { 
+                inspect(in,{p}, assertions, listener) & 
+                inspect(!in, {p}, attacks, speaker) 
+            } 
+            then 
+            { 
+                store(add, {p}, attacks, speaker) & 
+                move(mandate, future, DefenceLeft) 
+            } 
+        } 
+    };
+    
+    {   AttackRightConjunct, {p},
+        { 
+            if 
+            { 
+                inspect(in,{p}, assertions, listener) & 
+                inspect(!in, {p}, attacks, speaker) 
+            } 
+            then 
+            { 
+                store(add, {p}, attacks, speaker) & 
+                move(mandate, future, DefenceRight) 
+            } 
+        } 
+    };
+    
+    {   AttackDisjunction, {p},
+        { 
+            if 
+            { 
+                inspect(in,{p},assertions,proponent) & 
+                inspect(!in, {p}, attacks, opponent) 
+            } 
+            then 
+            { 
+                {
+                    store(add, {p}, attacks, speaker)
+                }
+                &
+                {   move(mandate, future, DefenceLeft) }    || 
+                {   move(mandate, future, DefenceRight) } 
+            } 
+        } 
+    };
+    
+    {   AttackNegation, {!p},
+        { 
+            if 
+            { 
+                inspect(in,{!p}, assertions, listener) & 
+                inspect(!in, {!p}, attacks, speaker)
+            } 
+            then 
+            { 
+                store(add, {!p}, attacks, speaker) & 
+                store(add, {!p}, assertions, speaker) & 
+                move(mandate, future, Defense, {!p}) 
+            } 
+        } 
+    };
+    
+    {   AttackImplication, {p,q},
+        { 
+            if 
+            { 
+                inspect(in,{p}, assertions, listener) & 
+                inspect(!in, {p}, attacks, speaker) 
+            } 
+            then 
+            { 
+                store(add, {p}, attacks, speaker) & 
+                move(mandate, future, Defence, {q}) 
+            } 
+        } 
+    };
+    
+    {   DefenceLeft, {p},
+        {
+            if 
+            { 
+                inspect(top, {p}, attacks, listener) & 
+                event(past, AttackLeftConjunct, {p}, listener)
+            } 
+            then 
+            { 
+                store(add, {p}, assertions, speaker) & 
+                store(remove, {p}, attacks, listener) 
+            } 
+        } 
+    };
+    
+    {   DefenceRight, {p},
+        {
+            if 
+            { 
+                inspect(top, {p}, attacks, listener) & 
+                event(past, AttackRightConjunct, {p}, listener) 
+            } 
+            then 
+            { 
+                store(add, {p}, assertions, speaker) & 
+                store(remove, {p}, attacks, listener) 
+            } 
+        } 
+    };
+    
+    {   Defence, {p},
+        {
+            if 
+            { 
+                inspect(top, {p}, attacks, listener) & 
+                event(past, AttackDisjunction, {p}, listener) 
+            } 
+            then 
+            { 
+                store(add, {p}, assertions, speaker) & 
+                store(remove, {p}, attacks, listener) 
+            } 
+        } 
+    };
+}
