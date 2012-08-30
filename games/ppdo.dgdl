@@ -1,0 +1,223 @@
+PPD0
+{
+    {   turns, magnitude:multiple, ordering:strict };
+    {   roles, {Speaker, Listener} };
+    {   players, id:black, roles:{ Speaker } };
+    {   players, id:white, roles:{ Listener } };
+    {   store, id:Assertions, owner:black, structure:set, visibility:public }; 
+    {store, id:Assertions, owner:white, structure:set, visibility:public }; 
+    {store, id:Concessions, owner:black, structure:set, visibility:public }; 
+    {store, id:Concessions, owner:white, structure:set, visibility:public }; 
+    {store, id:Dark, owner:black, structure:set, visibility:private }; 
+    {store, id:Dark, owner:white, structure:set, visibility:private };
+
+    {   Commencement, scope:initial,
+        {   
+            move(mandate, next, Assertion, Speaker) 
+        } 
+    };
+
+    {   SpeakerWins, scope:turnwise,
+        { 
+            if 
+            { 
+                inspect(in,{p},Assertions,Listener,initial) &
+                inspect(!in,{p},Assertions,Listener,current) 
+            } 
+            then 
+            { 
+                status(terminate,PPD0), assign(speaker, winner) 
+            } 
+        } 
+    };
+
+    {   ListenerWins, scope:turnwise,
+        { 
+            if 
+            { 
+                inspect(in,{p},Assertions,Speaker,initial) & 
+                inspect(!in,{p},Assertions,Speaker,current) 
+            } 
+            then 
+            { 
+                status(terminate,PPD0) & 
+                assign(listener, winner) 
+            } 
+        } 
+    };
+
+    {   Assert, {p},
+        { 
+            store(add, {p}, Assertions, Speaker) & 
+            store(add, {p}, Assertions, Listener) 
+        } 
+    };
+
+    {   Concede, {p},
+        { 
+            if 
+            { 
+                { 
+                    inspect(!in, {p}, Concessions, Speaker) & 
+                    inspect(in, {p}, Assertions, Listener) 
+                }
+                || 
+                { 
+                    inspect(!in, {p}, Concessions, Speaker) & 
+                    { 
+                        {   event(last, Request, {p})   }   || 
+                        {   event(last, Serious, {p})   }
+                    } 
+                }
+            }     
+            then 
+            {
+                store(add, {p}, Concessions, Speaker) 
+            } 
+        } 
+    };
+
+    {   ElementaryArgument, {p, Q},
+        { 
+            if 
+            { 
+                inspect(!in, {p}, Concessions, Listener) & 
+                event(past, Challenge, {p}, Listener) 
+            }
+            then 
+            { 
+                store(add, {p}, Assertions, Speaker) & 
+                store(add, {p}, Concessions, Speaker) & 
+                store(add, {Q}, Assertions, Speaker) & 
+                store(add, {Q}, Concessions, Speaker) & 
+                store(add, <{p}, Q>, Assertions, Speaker) & 
+                store(add, <{p}, Q>, Concessions, Speaker) 
+            } 
+        } 
+    };
+
+    {   Request, {p},
+        { 
+            if 
+            { 
+                inspect(!in, {p}, Concessions, Speaker) 
+            } 
+            then 
+            { 
+                {   move(mandate, next, Concede, {p})           }   || 
+                {   move(mandate, next, WeakRetraction, {p})    }
+            } 
+        } 
+    };
+
+    {   Serious, {p},
+        { 
+            if
+            { 
+                { 
+                    inspect(in, {p}, Dark, Listener) 
+                } 
+                & 
+                { 
+                    { event(last, nc, {p}) } || 
+                    { event(last, Challenge, {p}) } 
+                } 
+            } 
+            then 
+            { 
+                move(mandate, next, Concede, {p})
+            }
+            elseif
+            { 
+                { 
+                    inspect(!in, {p}, Dark, Listener) 
+                } 
+                & 
+                { 
+                    {   event(last, nc, {p}) } || 
+                    {   event(last, Challenge, {p}) } 
+                } 
+            } 
+            then 
+            { 
+                {   move(mandate, next, Concede, {p}) } || 
+                {   move(mandate, next, nc, {p}) } 
+            } 
+        } 
+    };
+
+    {   Resolve, {p, q},
+        { 
+            if 
+            { 
+                inspect(in, {p}, Concessions, Listener) & 
+                inspect(in, {q}, Concessions, Listener) 
+            }
+            then 
+            { 
+                {   move(mandate, next, WeakRetraction, {p})    }   || 
+                {   move(mandate, next, WeakRetraction, {q})    }
+            } 
+        } 
+    };
+
+    {   Challenge, {p},
+        { 
+            if 
+            { 
+                inspect(in, {p}, Assertions, Listener) & 
+                inspect(in, {p}, Concessions, Speaker) & 
+                event(!past, Challenge, {p}, Listener) 
+            } 
+            then 
+            { 
+                {   move(mandate, next, ElementaryArgument, {p, Q}) }   || 
+                {   move(mandate, next, WeakRetraction, {p})        }   || 
+                {   move(mandate, next, StrongRetraction, {p})      }
+            } 
+        } 
+    };
+
+    {   WeakRetraction, {p},
+        { 
+            if 
+            { 
+                {
+                    { 
+                        inspect(!in, {p}, Dark, Speaker) & 
+                        event(!past, Serious, {p}, Listener) &  
+                    }
+                    &
+                    { 
+                        {   event(last, Request, {p}, Listener) } || 
+                        {   event(last, Serious, {p}, Listener) } 
+                    }
+                }
+                || 
+                { 
+                    inspect(!in, {p}, Dark, Speaker) & 
+                    event(!past, Serious, {p}, Listener) & 
+                    inspect(in, {p}, Concessions, Speaker) 
+                } 
+            }
+            then 
+            { 
+                store(remove, {p}, Assertions, Speaker) & 
+                store(remove, {p}, Concessions, Speaker) 
+            } 
+        } 
+    };
+
+    {   StrongRetraction, {p},
+        { 
+            store(remove, {p}, Assertions, Speaker) 
+        } 
+    };
+
+    {   EndTurn, {p},
+        { 
+            assign(Speaker, Listener) & 
+            assign(Listener, Speaker) 
+        } 
+    };
+}
