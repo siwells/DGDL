@@ -1,0 +1,128 @@
+CB
+{
+    {   turns, magnitude:single, ordering:strict, max:$UserDefined$ }; 
+    {   player, id:black };
+    {   player, id:white };
+    {   store, id:CS, owner:black, structure:set, visibility:public }; 
+    {   store, id:CS, owner:white, structure:set, visibility:public };
+
+    {   SpeakerWins1, scope:turnwise,
+        {
+            if 
+            { 
+                numturns(CB,max) & 
+                magnitude(CS, speaker, greater, CS, listener) 
+            } 
+            then 
+            { 
+                status(terminate,CB) & 
+                assign(speaker, winner) 
+            } 
+        }        
+    };
+    
+    {   ListenerWins1, scope:turnwise,
+        {
+            if 
+            { 
+                numturns(CB,max) & 
+                magnitude(CS listener, greater, CS, speaker) 
+            } 
+            then 
+            { 
+                status(terminate,CB) & 
+                assign(listener, winner) 
+            } 
+        }
+    };
+    
+    {   SpeakerWins2, scope:turnwise,
+        {
+            if 
+            {   
+                inspect(in,{p},CS,Listener,initial) & 
+                inspect(!in,{p},CS,Listener,current) 
+            } 
+            then 
+            { 
+                status(terminate,CB), assign(speaker, winner) 
+            } 
+        } 
+    };
+        
+    {   ListenerWins2, scope:turnwise,
+        {
+            if 
+            { 
+                inspect(in,{p},CS,Speaker,initial) & 
+                inspect(!in,{p},CS,Speaker,current) 
+            } 
+            then 
+            { 
+                status(terminate,CB), assign(listener, winner) 
+            } 
+        } 
+    };
+            
+    {   statement, {p},
+        { 
+            if 
+            { 
+                move(last, challenge, q) & 
+                corresponds(<q,p>,ImmediateConsequence) 
+            } 
+            then 
+            { 
+                store(add, {p}, CS, listener) 
+            } 
+            else 
+            { 
+                store(add, {p}, CS, speaker) 
+            }
+        }
+     }; 
+
+    {   withdraw, {p},
+        { 
+            store(remove, {p}, CS, speaker)
+        }
+    }; 
+    
+    {   question, {p},
+        { 
+            {   move(mandate, next, statement, {p})     }   || 
+            {   move(mandate, next, statement, {!p})    }   || 
+            {   move(mandate, next, withdraw, {p})      }
+        }
+    }; 
+    
+    {   challenge, {p},
+        { 
+            store(remove, {p}, CS, listener) & 
+            { 
+                {   move(mandate, next, withdraw, {p})  } || 
+                {   
+                    move(mandate, next, statement, {q})  &
+                    corresponds(<p,q>,ImmediateConsequence))
+                }
+            } 
+        }
+    }; 
+    
+    {   WithdrawPlusChallenge, {p},
+        { 
+            {
+                store(remove, {p}, CS, speaker) & 
+                store(add, {p}, CS, listener) 
+            }
+            & 
+            {
+                {   move(mandate, next, withdraw, {p})  }   || 
+                {   
+                    move(mandate, next, statement, {q}) &
+                    corresponds(<p,q>,ImmediateConsequence))
+                } 
+            } 
+        }        
+    };
+}
