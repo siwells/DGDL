@@ -1,0 +1,129 @@
+MAgtALO
+{
+    {   turns, magnitude:single, ordering:liberal }; 
+    {   players, min:2, max:undefined };
+    {   player, id:initiator, role:speaker };
+    {   player, id:$PlayerID$, role:speaker };
+
+    {   Initial, scope:initial,
+        { 
+            move(mandate, next, Start, initiator) 
+        } 
+    };
+
+    {   Start, {p},
+        { 
+            if 
+            { 
+                player(initiator) 
+            } 
+            then 
+            { 
+                {   move(mandate, next, Agree, initiator)       }   || 
+                {   move(mandate, next, Disagree, initiator)    }   || 
+                {   move(mandate, next, WhoAgrees, initiator)   }
+            } 
+        } 
+    };
+
+    {   Agree, {p},
+        { 
+            move(mandate, next, GiveReason) 
+        } 
+    };
+
+    {   Disagree, {p},
+        { 
+            move(mandate, next, GiveReason) 
+        } 
+    };
+
+    {   WhoAgrees, {p},
+        { 
+            if 
+            { 
+                player(initiator) 
+            } 
+            then 
+            { 
+                {   move(permit, next, Agree)       }    || 
+                {   move(permit, next, Disagree)    }
+            } 
+        } 
+    };
+
+    {GiveReason, {p},
+        { 
+            {   move(mandate, next, Agree)      }   || 
+            {   move(mandate, next, Disagree)   }
+        } 
+    };
+
+    {MakeCurrent, {p},
+        { 
+            if 
+            { 
+                player(initiator) 
+            } 
+            then 
+            { 
+                {   move(mandate, next, Agree)      }   || 
+                {   move(mandate, next, Disagree)   }   || 
+                {   move(mandate, next, WhoAgrees)  }
+            } 
+        } 
+    };
+
+    {   ElicitAgreement, {p},
+        { 
+            if 
+            { 
+                player(initiator) 
+            } 
+            then 
+            { 
+                {   move(mandate, next, Agree)      }   || 
+                {   move(mandate, next, Disagree)   }
+            } 
+        } 
+    };
+
+    {   Why, {p},
+        { 
+            if 
+            { 
+                player(initiator) 
+            } 
+            then 
+            { 
+                move(mandate, next, GiveReason) 
+            } 
+        } 
+    };
+
+    {   DifferentReason, {p},
+        { 
+            if 
+            { 
+                player(initiator) 
+            } 
+            then 
+            { 
+                move(mandate, next, GiveReason) 
+            } 
+        } 
+    };
+
+    {   MoreReasons, {p},
+        { 
+            if 
+            { 
+                player(initiator) 
+            } 
+            then 
+            { 
+                move(mandate, next, GiveReason) 
+            } 
+        } 
+    };
+}
