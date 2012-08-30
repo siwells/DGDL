@@ -1,0 +1,268 @@
+BG
+{ 
+    PG0
+    {
+        {   turns, magnitude:single, ordering:strict }; 
+        {   players, min:2, max:2 };
+        {   player, id:initiator, role:speaker };
+        {   player, id:respondent, role:listener };
+        {   store, id:CS, owner:initiator, structure:set, visibility:public }; 
+        {   store, id:CS, owner:respondent, structure:set, visibility:public };
+        
+        {   Initial, scope:initial,
+            { 
+                status(active, PG0) & 
+                move(mandate, next, Request, {p}) 
+            } 
+        };
+        
+        {   Progression, scope:turnwise,
+            { 
+                if 
+                { 
+                    inspect(in, {p}, CS, initiator, initial) & 
+                    inspect(in, {p}, CS, initiator, current) & 
+                    inspect(in, <p, {q}>, CS, initiator, current) & 
+                    event(last, Reject, {p}, respondent)
+                } 
+                then 
+                { 
+                    status(active, NG0)
+                } 
+            } 
+        };
+        
+        {   Termination, scope:turnwise,
+            { 
+                if 
+                { 
+                    { 
+                        inspect(in, {p}, CS, initiator, initial)    & 
+                        inspect(!in, {p}, CS, initiator, current) 
+                    } 
+                    || 
+                    { 
+                        inspect(in, {p}, CS, initiator, initial)    & 
+                        inspect(in, {p}, CS, respondent, current) 
+                    } 
+                } 
+                then 
+                { 
+                    status(terminate, BG0) 
+                } 
+            } 
+        };
+        
+        {   Request, {p},
+            { 
+                {   store(add, {p}, CS, speaker) }  
+                & 
+                { 
+                    {   move(mandate, next, Accept, {p})    }   || 
+                    {   move(mandate, next, Reject, {p})    }   || 
+                    {   move(mandate, next, Challenge, {p}) } 
+                } 
+            } 
+        };
+        
+        {   Accept, {p},
+            { 
+                if 
+                { 
+                    event(last, Request, {p}) 
+                } 
+                then 
+                { 
+                    store(add, {p}, CS, speaker) 
+                } 
+            } 
+        };
+        
+        {   Reject, {p},
+            {
+                if 
+                { 
+                    event(last, Request, {p}) 
+                } 
+                then 
+                { 
+                    {   store(remove, {p}, CS, speaker) }   
+                    & 
+                    { 
+                        {   move(mandate, next, Challenge, {p}) } || 
+                        {   move(mandate, next, Withdraw, {p})  } 
+                    } 
+                } 
+            } 
+        };
+        
+        {   Challenge, {p},
+            { 
+                if 
+                { 
+                    {   event(last, Request, {p})   }   || 
+                    {   event(last, Reject, {p})    }   || 
+                    {   event(last, Defense, {p})   } 
+                } 
+                then 
+                { 
+                    {   move(mandate, next, Defense, {p})   }   || 
+                    {   move(mandate, next, Reject, {p})    }    || 
+                    {   move(mandate, next, Withdraw, {p})  } 
+                } 
+            } 
+        };
+        
+        {   Defense, {p,q},
+            { 
+                {   
+                    update(add, {p}, CS, speaker) & 
+                    store(add, {q}, CS, speaker) & 
+                    store(add, <p, {q}>, CS, speaker)
+                } 
+                & 
+                { 
+                    {   move(mandate, next, Challenge, {p})     }   || 
+                    {   move(mandate, next, Challenge, {q})     }   || 
+                    {   move(mandate, next, Challenge, <p, {q}) }   || 
+                    {   move(mandate, next, Reject, {p})        }   || 
+                    {   move(mandate, next, Reject, {q})        }   || 
+                    {   move(mandate, next, Reject, <p, {q}>)   }   || 
+                    {   move(mandate, next, Accept, {p})        }   || 
+                    {   move(mandate, next, Accept, {q})        }   || 
+                    {   move(mandate, next, Accept, <p, {q}>)   } 
+                } 
+            } 
+        };
+        
+        { Withdraw, {p},
+            { 
+                if 
+                { 
+                    {   event(last, Challenge, {p}) }   || 
+                    {   event(last, Reject, {p})    } 
+                } 
+                then 
+                { 
+                    status(terminate, BG0) 
+                } 
+            } 
+         };
+    } 
+
+    NG0
+    {
+        {   turns, magnitude:single, ordering:strict }; { players, min:2, max:2 };
+        {   player, id:initiator, role:speaker };
+        {   player, id:respondent, role:listener };
+        {   store, id:CS, owner:initiator, structure:set, visibility:public }; 
+        {   store, id:CS, owner:respondent, structure:set, visibility:public };
+        
+        {   Initial, scope:initial,
+            { 
+                if 
+                { 
+                    inspect(in, {p}, CS, initiator, initial) & 
+                    inspect(in, {p}, CS, initiator, current) & 
+                    inspect(!in, {p}, CS, respondent, current) & 
+                    move(mandate, next, Request, {p}) 
+                }
+                then 
+                { 
+                    move(mandate, next, Offer, {p,q}) 
+                } 
+            } 
+        };
+        
+        {   Termination, scope:turnwise,
+            { 
+                if 
+                { 
+                    {   
+                        inspect(in, {p}, CS, initiator, initial) & 
+                        inspect(!in, {p}, CS, initiator, current) 
+                    } 
+                    || 
+                    { 
+                        inspect(in, {p}, CS, initiator, initial) & 
+                        inspect(in, {p}, CS, respondent, current) 
+                    } 
+                } 
+                then 
+                { 
+                    status(terminate, BG0) 
+                } 
+            } 
+        };
+        
+        {   Offer, {p,q},
+            { 
+                if 
+                { 
+                    inspect(!in, <Offer, {p, q}>, CS, speaker) 
+                } 
+                then 
+                { 
+                    {
+                        update(add, {p}, CS, speaker) & 
+                        update(add, {q}, CS, speaker) & 
+                        update(add, <Offer, {p,q}>, CS, speaker) 
+                    }
+                    & 
+                    { 
+                        move(mandate, next, Accept, {p})   || 
+                        move(mandate, next, Reject, {p})   || 
+                        move(mandate, next, Withdraw, {p}) || 
+                        move(mandate, next, Offer, {p,r})  || 
+                        move(mandate, next, Offer, {s,q})  || 
+                        move(mandate, next, Offer, {t,u}) 
+                    } 
+                } 
+            } 
+        };
+         
+        {   Accept, {p,q},
+            { 
+                if 
+                { 
+                    event(last, Offer, {p, q})
+                } 
+                then 
+                { 
+                    update(add, {p}, CS, speaker) & 
+                    update(add, {q}, CS, speaker) & 
+                    update(add, <Offer, {p,q}>, CS, speaker) 
+                } 
+            } 
+        };
+        
+        {   Reject, {p,q},
+            { 
+                if 
+                { 
+                    event(last, Offer, {p, q}
+                } 
+                then 
+                { 
+                    {   move(mandate, next, Offer, {p,r})   } || 
+                    {   move(mandate, next, Offer, {s,q})   } || 
+                    {   move(mandate, next, Offer, {t,u})   } 
+                } 
+            } 
+        };
+        
+        {   Withdraw, {p},
+            { 
+                if 
+                { 
+                    {   event(last, Offer, {p, q}   } || 
+                    {   event(last, Reject, {p, q}  }
+                } 
+                then 
+                { 
+                    status(terminate, BG0) 
+                } 
+            } 
+        };
+    } 
+}
