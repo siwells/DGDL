@@ -1,0 +1,336 @@
+TDG
+{
+    {   turns, magnitude:single, ordering:liberal };
+    {   players, id:init, roles:{ proponent, speaker } };
+    {   players, id:resp, roles:{ opponent, listener } };
+    {   players, id:referee, roles:{ listener } };
+    {   store, id:CS, owner:init, structure:set, visibility:public };
+    {   store, id:CS, owner:resp, structure:set, visibility:public };
+    {   store, id:Claims, owner:shared, structure:stack, visibility:public };
+
+    {   Initial, scope:initial, 
+        { 
+            move(mandate, next, Claim, speaker) 
+        } 
+    };
+
+    {   Claim, {p},
+        { 
+            store(add, {p}, claims)         & 
+            store(add, {p}, CS, proponent)  & 
+            assign(proponent, listener)     & 
+            assign(opponent, speaker) 
+        } 
+    };
+
+    {   Why, {p},
+        { 
+            if 
+            { 
+                inrole(speaker, opponent) & inspect(in, {p}, Claims) 
+            } 
+            then
+            { 
+                {
+                    assign(proponent, speaker) & 
+                    assign(opponent, listener)
+                }
+                &
+                {
+                    {   move(mandate, next, Withdraw, {p}, proponent)   }   || 
+                    {   move(mandate, next, SupplyData, {p}, proponent) }
+                }
+            }
+        }  
+    };
+
+    {   OK, {p},
+        { 
+            if 
+            { 
+                inrole(speaker, opponent) & 
+                inspect(in, p, Claims) 
+            } 
+            then
+            {
+                store(remove, {p}, Claims)  & 
+                store(add, {p}, opponent)       & 
+                store(remove, {!p}, opponent)   & 
+                assign(referee, speaker)        & 
+                assign(opponent, listener) 
+            } 
+        }
+    };
+
+    {   So, {p},
+        { 
+            if 
+            { 
+                inrole(speaker, opponent)           & 
+                inspect(!in, <p,{q}>, CS, speaker)  & 
+                inspect(in, {p}, Claims) 
+            } 
+            then 
+            { 
+                assign(proponent, speaker)          & 
+                assign(opponent, listener)          & 
+                move(mandate, next, SupplyWarrant) 
+            } 
+        }
+    };
+
+    {   Presupposing, {p},
+        { 
+            if 
+            { 
+                inrole(speaker, opponent) & 
+                inspect(in, <p,{q}>, Claims) 
+            }
+            then 
+            { 
+                {
+                    assign(proponent, speaker) & 
+                    assign(opponent, listener) 
+                }
+                &
+                { 
+                    {   move(mandate, next, SupplyPresupposition, {p})  } || 
+                    {   move(mandate, next, Withdraw, {p})              } 
+                } 
+            } 
+        }
+    };
+
+    {   OnAccountOf, {p},
+        { 
+            if 
+            { 
+                inrole(speaker, opponent)       & 
+                inspect(in, <p,{q}>, Claims)    &
+                event(last, SupplyWarrant, {p}) & 
+                relation(<p,{q}> ,{c}, warrant) 
+            }
+            then 
+            { 
+                {
+                    assign(proponent, speaker) & 
+                    assign(opponent, listener) 
+                }
+                & 
+                { 
+                    {   move(mandate, next, Withdraw, p)    } 
+                    || 
+                    {   
+                        move(mandate, next, SupplyBacking, {s}) &
+                        relation(<p,{q}> ,{c} , backing) 
+                    }
+                    
+                } 
+            } 
+        }
+    };
+
+    {   SupplyData, {p},
+        { 
+            if 
+            { 
+                inrole(speaker, proponent)  & 
+                event(last, Why, {q})       & 
+                inspect(in, {q}, Claims) 
+            }
+            then 
+            { 
+                {
+                    store(add, {p}, CS, proponent)  & 
+                    store(add, {p}, Claims)         &
+                    assign(opponent, speaker)       & 
+                    assign(proponent, listener) 
+                }
+                &
+                { 
+                    {   move(mandate, next, SwitchFocus, {q})   }   || 
+                    {   move(mandate, next, OK, {p})            }   || 
+                    {   move(mandate, next, So, {p})            }   || 
+                    {   move(mandate, next, OK, {p})            } 
+                } 
+            } 
+        }    
+    };
+
+    {   SupplyWarrant, {p},
+        { 
+            if 
+            { 
+                inrole(speaker, proponent)  & 
+                event(last, So, {q})        & 
+                inspect(in, {q}, Claims) 
+            }
+            then 
+            { 
+                {
+                    store(add, {p}, CS, proponent)  & 
+                    store(add, {p}, Claims)         &
+                    assign(opponent, speaker)   & 
+                    assign(proponent, listener) 
+                }
+                &
+                { 
+                    {   move(mandate, next, presupposing, {q})  }   || 
+                    {   move(mandate, next, OnAccountOf, {r})   }   || 
+                    {   move(mandate, next, OK, {p})            }
+                } 
+            } 
+        }
+    };
+
+    {   SupplyPresupposition, {p},
+        { 
+            if 
+            { 
+                inrole(speaker, proponent)      & 
+                inspect(in, <q,{r}>, claims)    & 
+                inspect(in, {r}, Claims) 
+            }
+            then 
+            { 
+                store(add, {p}, CS, proponent)  & 
+                store(add, {p}, Claims)         & 
+                assign(opponent, speaker)       & 
+                assign(proponent, listener) 
+            } 
+        } 
+    };
+
+    {   SupplyBacking, {p},
+        { 
+            if 
+            { 
+                inrole(speaker, proponent)      & 
+                event(last, OnAccountOf, {p})   & 
+                event(past, SupplyWarrant, {p}) & 
+                inspect(in, <p,{q}>, claims) 
+            }     
+            then 
+            { 
+                store(add, <p,{q}>, CS, opponent)   & 
+                store(remove, <p,{q}>, Claims)      & 
+                assign(referee, speaker)            & 
+                assign(proponent, listener) 
+            } 
+        } 
+    }; 
+    
+    {   Withdraw, {p},
+        { 
+            if 
+            { 
+                inrole(speaker, proponent)  & 
+                inspect(in, {p}, claims) 
+            } 
+            then
+            { 
+                store(remove, {p}, Claims)          & 
+                store(remove, {p}, CS, proponent)   & 
+                assign(referee, speaker)            & 
+                assign(proponent, listener) 
+            } 
+        } 
+    }; 
+    
+    {   SwitchFocus, {p},
+        { 
+            if
+            { 
+                inrole(speaker, opponent)       & 
+                inspect(!in, {p}, CS, speaker)  & 
+                inspect(on, {p}, Claims)        & 
+                inspect(!top, p, Claims) 
+            }
+            then
+            { 
+                store(add, {p}, Claims)         & 
+                assign(opponent, speaker)       & 
+                assign(proponent, listener) 
+            } 
+        } 
+    };
+
+    {   CurrentClaim, {p},
+        { 
+            if
+            { 
+                inspect(top, {p}, Claims)       & 
+                inrole(speaker, referee)        & 
+                inspect(in, {p}, CS, proponent) 
+            }
+            then
+            { 
+                assign(opponent, speaker) & 
+                assign(proponent, listener) 
+            } 
+        } 
+    };
+
+    {   End, {p},
+        { 
+            if
+            { 
+                inrole(speaker, referee) & 
+                size(empty, Claims) 
+            }
+            then
+            { 
+                status(terminate, TDG) 
+            } 
+        } 
+    };
+
+    {   Rebut, {p},
+        { 
+            if
+            { 
+                inrole(speaker, referee)            & 
+                inspect(top, {p}, Claims)           & 
+                inspect(!in, {p}, CS, opponent)     & 
+                inspect(!in, <q,{p}>, CS, opponent) 
+            }
+            then
+            { 
+                assign(opponent, speaker) & 
+                assign(referee, listener) 
+            } 
+        } 
+    }; 
+    
+    {   Rebuttal, {p},
+        { 
+            if
+            { 
+                inrole(speaker, opponent)       & 
+                event(last, Rebut, {q})         &
+                inspect(!in, {q}, CS, speaker)  & 
+                inspect(!in, {q}, CS, listener) 
+            }
+            then
+            { 
+                {
+                    store(add, {p}, Claims) & 
+                    store(add, {q}, Claims) & 
+                    store(add, {!q}, CS, speaker) & 
+                    store(add, {p}, CS, speaker) & 
+                    store(add, <!q,{p}>, CS, speaker) & 
+                    store(add, <!q,{p}>, Claims) & 
+                    assign(speaker, proponent) & 
+                    assign(listener, opponent) & 
+                    assign(opponent, speaker)
+                }
+                & 
+                { 
+                    {   move(mandate, next, Presupposing, {p})  } || 
+                    {   move(mandate, next, OnAccountOf, {p})   } || 
+                    {   move(mandate, next, OK, {p})            } 
+                }     
+            } 
+        } 
+    };
+}
