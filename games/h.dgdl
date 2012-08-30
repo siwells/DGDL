@@ -1,0 +1,77 @@
+H
+{
+    { turns, magnitude:single, ordering:strict };
+    { player, id:black, role:speaker };
+    { player, id:white, role:listener };
+    { store, id:CS, owner:black, structure:set, visibility:public }; 
+    { store, id:CS, owner:white, structure:set, visibility:public };
+    
+    { Statement, {p}, 
+        { 
+            store(add, {p}, CS, speaker) & store(add, {p}, CS, listener) 
+        } 
+    };
+    
+    { Statements, {p,q}, 
+        { 
+            if 
+            { 
+                event(last,<Challenge,p>) 
+            } 
+            then 
+            { 
+                store(add, {q}, CS, speaker) & 
+                store(add, <p,{q}>, CS, speaker) & 
+                store(add, {q}, CS, listener) & 
+                store(add, <p,{q}>, CS, listener) 
+            } 
+        }
+    };
+    
+    { NoCommitment, {p}, 
+        { 
+            store(remove, {p}, CS, speaker)
+        } 
+    };
+    
+    { Question, {p}, 
+        {
+            
+            store(add, {p}, CS, speaker) & 
+            {   
+                {   move(mandate, next, statement, {p}) }   || 
+                {   move(mandate, next, statement, {!p} }
+            }
+        } 
+    };
+    
+    { Challenge, {p}, 
+        { 
+            store(add, {p}, CS, listener) & 
+            { 
+                {   move(mandate, next, statement, {!p})    }   || 
+                {   move(mandate, next, NoCommitment, {p})  }   || 
+                {   move(mandate, next, statements, {p,q})  }
+            } 
+        } 
+    };
+    
+    { Resolve, {p}, 
+        { 
+            {   move(mandate, next, statement, {!p})    }   || 
+            {   move(mandate, next, NoCommitment, {p})  } 
+        } 
+    };
+    
+    { NoCommitmentPlusChallenge, {p}, 
+        { 
+            store(remove, {p}, CS, speaker) & 
+            store(add, {p}, CS, listener) & 
+            { 
+                {   move(mandate, next, statement, {p})     }   || 
+                {   move(mandate, next, NoCommitment, {!p}) }   || 
+                {   move(mandate, next, statements, {p,q})  }
+            } 
+        } 
+    };
+}
