@@ -1,0 +1,90 @@
+DC
+{
+    { turns, magnitude:single, ordering:strict };
+    { player, id:init };
+    { player, id:resp };
+    { store, id:CS, owner:init, structure:set, visibility:public }; 
+    { store, id:CS, owner:resp, structure:set, visibility:public };
+
+    { Initial, scope:initial, 
+        { 
+            size(CS, init, empty) & 
+            size(CS, resp, empty) & 
+            assign(init, speaker) & 
+            assign(resp, listener) 
+        } 
+    };
+    
+    { Statement, {p},
+        { 
+            if 
+            { 
+                inspect(!in, {p}, CS, speaker) & 
+                inspect(in, {p}, CS, listener) 
+            } 
+            then 
+            { 
+                store(add, {p}, CS, speaker) & 
+                store(add, {p}, CS, listener)
+            }
+        }
+    };
+    
+    { Defence, {p},
+        { 
+            if 
+            { 
+                event(last, Challenge, {q}) & 
+                inspect(!in, < Challenge, {p} >, CS, Listener) 
+            } 
+            then 
+            { 
+                store(add, {p}, CS, speaker) & 
+                store(add, < p, {q} >, CS, speaker) & 
+                store(add, {p}, CS, listener) & 
+                store(add, < p, {q} >, CS, listener) 
+            } 
+        } 
+    };
+    
+    { Withdraw, {p},
+        { 
+            store(remove, {p}, CS, speaker) 
+        } 
+    };
+    
+    { Resolve, {p},
+        { 
+            {   move(mandate, next, Statement, {p})     }   || 
+            {   move(mandate, next, Statement, {!p})    }   || 
+            {   move(mandate, next, NoCommitment, {p})  } 
+        } 
+    };
+    
+    { Challenge, {p},
+        { 
+            store(remove, {p}, CS, speaker) & 
+            store(add, {p}, CS, listener) & 
+            store(add, <Challenge, {p}>, CS, speaker) & 
+            { 
+                {   move(mandate, next, NoCommitment, {p})  }   || 
+                {   move(mandate, next, Resolve, {p})       }   || 
+                {   move(mandate, next, Defence, {q})       } 
+            } 
+        } 
+    };
+    
+    { Resolve, {p},
+        { 
+            if 
+            { 
+                event(last, Challenge, {p}) 
+            } 
+            then 
+            { 
+                {   move(mandate, next, NoCommitment, {p})  }   || 
+                {   move(mandate, next, Statement, {p})     }
+            } 
+        } 
+    };
+}
