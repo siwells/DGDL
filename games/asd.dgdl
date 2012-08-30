@@ -1,0 +1,121 @@
+ASD
+{
+    { turns, magnitude:single, ordering:strict };
+    { player, id: black };
+    { player, id: white };
+    { store, id:CS, owner:black, structure:set, visibility:public }; 
+    { store, id:CS, owner:white, structure:set, visibility:public };
+    
+    { statement, {p},
+        { 
+            if 
+            { 
+                corresponds(<p,{q}>, ImmediateConsequence) 
+            } 
+            then 
+            { 
+                store(add, {p}, CS, speaker) &
+                store(add, {p}, CS, listener) & 
+                store(add, {q}, CS, listener)
+            } 
+            else 
+            { 
+                store(add, {p}, CS, speaker) 
+            }
+        }
+    };
+
+    { withdraw, {p},
+        { 
+            if 
+            { 
+                corresponds(<p,{q}>, ImmediateConsequence) & 
+                inspect(!in, {q}, CS, listener, current ) 
+            } 
+            then 
+            { 
+                store(remove, p, CS, speaker) 
+            }
+        }
+    };
+
+    { question, {p}
+        { 
+            {   move(mandate, next, statement, {p}) }     || 
+            {   move(mandate, next, statement, {!p}) }    || 
+            {   move(mandate, next, withdraw, {p}) }
+        }
+    };
+
+    { challenge, {p}
+        { 
+            store(add, {p}, CS, listener) & 
+            { 
+                {   move(mandate, next, withdraw, {p}) }  || 
+                { 
+                    move(mandate, next, statement, {q})     & 
+                    corresponds(<p,q>,ImmediateConsequence) 
+                } 
+            }
+        }
+    };
+
+    { AssumptionAttack, {p}
+        { 
+            if 
+            { 
+                event(last, < statement,{q}>)   & 
+                corresponds(<p,{q}>, schemeID) 
+            }
+            then
+            { 
+                {   move(mandate, next, statement, {p}) }     || 
+                {   move(mandate, next, statement, !{p}) }    || 
+                {   move(mandate, next, withdraw, {p}) }
+            } 
+        }
+    };
+
+    { ExceptionAttack, {p}
+        { 
+            if 
+            { 
+                event(last, < statement,{q}>)   & 
+                corresponds(<p,{q}>, schemeID) 
+            }
+            then 
+            {   
+                {   move(mandate, next, statement, {p})     }   || 
+                {   move(mandate, next, statement, {!p})    }   || 
+                {   move(mandate, next, withdraw, {p})      }   || 
+                {   move(mandate, next, challenge, {!p})    }
+            } 
+        }
+    };
+
+    { WithdrawPlusChallenge, {p}
+        { 
+            if 
+            { 
+                corresponds(<p,{q}>, ImmediateConsequence)  & 
+                inspect(!in, {q}, CS, listener, current ) 
+            }
+            then 
+            { 
+                {
+                    store(remove, {p}, CS, speaker)         & 
+                    store(add, {p}, CS, listener)           
+                }
+                &
+                {
+                    {   move(mandate, next, withdraw, {p})  }   ||
+                    {
+                        move(mandate, next, statement, {q})             & 
+                        corresponds(<p,q>, ImmediateConsequenceScheme)  &
+                        extCondition(Scheme, ImmediateConsequenceScheme) 
+                    }
+                } 
+            } 
+        }
+    };
+}
