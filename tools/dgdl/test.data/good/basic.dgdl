@@ -1,0 +1,2 @@
+system:{id:sys1,game:{id:fg,composition:{turns:{magnitude:single,ordering:strict,max:2},players:{min:2,max:undefined},player:{id:white,roles:{rl1,rl2}},store:{id:cstore,owner:{white,black},structure:stack,visibility:public},roles:{rl1,rl2}},rules:{rule:{id:rl1,scope:initial,body:{ if con1{condition1,p2,p3} then eff1{param2}}}},moves:{move:{id:mv1,content:{p1,p2},opener:"hello",body:{ if con1{param1,p2,p3} then eff1{param2}}}}}}
+
