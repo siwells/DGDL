@@ -84,6 +84,8 @@ def main():
         sys.exit(0)
     elif args.prettyprint:
         pretty_print(t, outfile)
+    else:
+        sys.exit(0)
 
 if __name__ == "__main__":
     main()
